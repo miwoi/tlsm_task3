@@ -1,0 +1,39 @@
+{
+    "name": "Python uv Container",
+    "build": {
+        "dockerfile": "Dockerfile", 
+        "context": "."
+    },
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+
+    "postCreateCommand": "cd source && uv venv ./.venv && uv sync",
+
+    "runArgs": [
+        "-v", "/tmp/.X11-unix:/tmp/.X11-unix",
+        "--shm-size=512m" 
+    ],
+
+    "containerEnv": {
+        "DISPLAY": "host.docker.internal:0.0"
+    },
+
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter",
+                "google.geminicodeassist" 
+            ],
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "python.defaultInterpreterPath": "/workspaces/${localWorkspaceFolderBasename}/source/.venv/bin/python",
+                "python.terminal.activateEnvironment": true
+            }
+        }
+    }
+}
+
+
