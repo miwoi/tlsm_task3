@@ -12,13 +12,26 @@ now = datetime.datetime.now
 
 
 def main():
-    # Load and visalize data
+    # Load and visualize data
     E_infty = 0.5
     E = 2.0
     eta = 1.0
     n = 100
     omegas = [1.0]
     As = [1.0]
+
+    RNN(E_infty, E, eta, n, omegas, As)
+    Maxwell_Modell(E_infty, E, eta, n, omegas, As)
+
+
+def Maxwell_Modell(E_infty, E, eta, n, omega, A): 
+     
+     new = td.harmonic_data(E_infty, E, eta, n, omega, A)
+
+
+
+def RNN(E_infty, E, eta, n, omegas, As): 
+
 
     eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
     tp.plot_data(eps, eps_dot, sig, omegas, As)
@@ -31,6 +44,7 @@ def main():
     # Build model instance
     model = tm.build(key=keys[0])
 
+    ### Training 
     # Calibrate the model
     t1 = now()
     print(t1)
@@ -45,13 +59,14 @@ def main():
     )
 
     t2 = now()
-    print("it took", t2 - t1, "(sec) to calibrate the model")
+    print(f"it took {(t2 - t1).total_seconds():.2f} (sec) to calibrate the model")
 
     history.plot()
 
     # Unwrap all wrappers and apply all constraints to the model
     model_ = klax.finalize(model)
 
+    ### Plotting 
     eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
     sig_m = jax.vmap(model_)((eps, dts))
     tp.plot_data(eps, eps_dot, sig, omegas, As)
@@ -72,4 +87,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+        main()
