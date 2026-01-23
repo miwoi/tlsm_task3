@@ -4,9 +4,9 @@ import jax.random as jrandom
 import time
 import jax
 
-import tmlsm.data as td
-import tmlsm.plots as tp
-import tmlsm.models as tm
+import src.tmlsm.data as td
+import src.tmlsm.plots as tp
+import src.tmlsm.models as tm
 
 now = datetime.datetime.now
 
@@ -17,15 +17,17 @@ def main():
     E = 2.0
     eta = 1.0
     n = 100
-    omegas = [1.0]
-    As = [1.0]
+    omegas = [1.0,1.0]
+    As = [1.0,5.0]
 
     eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
+    print(eps.shape)
     tp.plot_data(eps, eps_dot, sig, omegas, As)
 
     # Create a random key for the random weight initialization and the
     # batch generation.
     key = jrandom.PRNGKey(time.time_ns())
+    print("base keys",key)
     keys = jrandom.split(key, 2)
 
     # Build model instance
@@ -39,7 +41,7 @@ def main():
         model,
         ((eps, dts), sig),
         batch_axis=0,
-        steps=1000,
+        steps=10000,
         history=klax.HistoryCallback(log_every=1),
         key=keys[1],
     )
@@ -57,8 +59,8 @@ def main():
     tp.plot_data(eps, eps_dot, sig, omegas, As)
     tp.plot_model_pred(eps, sig, sig_m, omegas, As)
 
-    As = [1, 1, 2]
-    omegas = [1, 2, 3]
+    As = [1, 1, 2,3]
+    omegas = [1, 2, 3,1]
 
     eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
     sig_m = jax.vmap(model_)((eps, dts))
