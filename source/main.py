@@ -39,6 +39,9 @@ def main():
     As_test = [1.0, 1.0, 2.0, 3.0]
     eps_test, eps_dot_test, sig_test, dts_test = td.generate_data_harmonic(E_infty, E, eta, n, omegas_test, As_test)
 
+    # Test Data (Relaxation)
+    eps_relax, eps_dot_relax, sig_relax, dts_relax = td.generate_data_relaxation(E_infty, E, eta, n, omegas_test, As_test)
+
     # --- Model Execution Loop ---
     base_key = jrandom.PRNGKey(time.time_ns())
     print("Base key:", base_key)
@@ -81,6 +84,7 @@ def main():
         ### Prediction
         sig_m_cal = jax.vmap(model_)((eps_cal, dts_cal))
         sig_m_test = jax.vmap(model_)((eps_test, dts_test))
+        sig_m_relax = jax.vmap(model_)((eps_relax, dts_relax))
 
         ### Saving Plots
         timestamp = int(time.time())
@@ -124,6 +128,11 @@ def main():
         # 7. Plots from plots.py (Model Prediction Test)
         tp.plot_model_pred(eps_test, sig_test, sig_m_test, omegas_test, As_test, save_path=os.path.join(save_dir, "model_prediction_test.png"))
 
+        # 8. Plots from plots.py (Data Relaxation)
+        tp.plot_data(eps_relax, eps_dot_relax, sig_relax, omegas_test, As_test, save_path=os.path.join(save_dir, "data_relaxation.png"))
+
+        # 9. Plots from plots.py (Model Prediction Relaxation)
+        tp.plot_model_pred(eps_relax, sig_relax, sig_m_relax, omegas_test, As_test, save_path=os.path.join(save_dir, "model_prediction_relaxation.png"))
 
 if __name__ == "__main__":
         main()
