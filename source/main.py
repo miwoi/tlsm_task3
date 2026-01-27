@@ -8,13 +8,34 @@ import matplotlib.pyplot as plt
 
 import src.tmlsm.data as td
 import src.tmlsm.models as tm
+import src.tmlsm.gsm_modell as gsm
+
+
+import src.tmlsm.plots.plots as tp
 import src.tmlsm.plots.calibration_vs_test_in_time as p_cal_test
 import src.tmlsm.plots.stress_vs_strain as p_stress_strain
 import src.tmlsm.plots.interpol_vs_extrapol as p_inter_extra
-import src.tmlsm.plots.plots as tp
-
 
 now = datetime.datetime.now
+
+
+
+
+# In main.py
+def GSM_Task(E_infty, E, eta, n, omegas, As):
+    # Daten laden
+    eps, _, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
+    
+    key = jrandom.PRNGKey(time.time_ns())
+    
+    # Modell erstellen (nur eta wird benötigt, E/E_infty lernt es implizit über die Energieform)
+    model = tm.GSMModel(eta=eta, key=key)
+
+    # Training ...
+    # ...
+
+
+
 
 
 def main():
@@ -42,6 +63,8 @@ def main():
     # Test Data (Relaxation)
     eps_relax, eps_dot_relax, sig_relax, dts_relax = td.generate_data_relaxation(E_infty, E, eta, n, omegas_test, As_test)
 
+
+
     # --- Model Execution Loop ---
     base_key = jrandom.PRNGKey(time.time_ns())
     print("Base key:", base_key)
@@ -49,7 +72,7 @@ def main():
 
 
     # Define models to run
-    models_to_run = ["RNN", "Hybrid"]
+    models_to_run = ["RNN", "Hybrid", "GSM"]
 
     for model_name in models_to_run:
         print(f"\n{'='*10} Running {model_name} Model {'='*10}")
@@ -62,6 +85,8 @@ def main():
             model = tm.build(key=key_init)
         elif model_name == "Hybrid":
             model = tm.HybridModel(E_infty, E, key=key_init)
+        elif model_name == "GSM":
+             model = gsm.GSMModel(eta, key=key_init)
         else:
             continue
 
