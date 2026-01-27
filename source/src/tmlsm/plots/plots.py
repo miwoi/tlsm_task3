@@ -14,7 +14,7 @@ colors = np.array(
 )
 
 
-def plot_data(eps, eps_dot, sig, omegas, As):
+def plot_data(eps, eps_dot, sig, omegas, As, save_path=None):
     n = len(eps[0])
     ns = np.linspace(0, 2 * np.pi, n)
 
@@ -56,10 +56,14 @@ def plot_data(eps, eps_dot, sig, omegas, As):
     ax.set_ylabel(r"strain rate $\.{\varepsilon}$")
 
     fig.tight_layout()
-    plt.show()
+    if save_path:
+        plt.savefig(save_path)
+        plt.close()
+    else:
+        plt.show()
 
 
-def plot_model_pred(eps, sig, sig_m, omegas, As):
+def plot_model_pred(eps, sig, sig_m, omegas, As, save_path=None):
     n = len(eps[0])
     ns = np.linspace(0, 2 * np.pi, n)
 
@@ -89,4 +93,8 @@ def plot_model_pred(eps, sig, sig_m, omegas, As):
     ax.set_ylabel("stress $\\sigma$")
 
     fig.tight_layout()
-    plt.show()
+    if save_path:
+        plt.savefig(save_path)
+        plt.close()
+    else:
+        plt.show()

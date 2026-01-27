@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 
 def stress_strain_plot(cal_real_sig, cal_pred_sig, test_real_sig, test_pred_sig,
-                       cal_real_eps, cal_pred_eps, test_real_eps, test_pred_eps):
+                       cal_real_eps, cal_pred_eps, test_real_eps, test_pred_eps, save_path=None):
     
     # Plot
     plt.figure(figsize=(8, 6))
@@ -40,9 +40,8 @@ def stress_strain_plot(cal_real_sig, cal_pred_sig, test_real_sig, test_pred_sig,
     # Grid
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
-
-
-
-
-
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()

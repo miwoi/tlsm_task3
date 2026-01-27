@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
          inputs, for test data strain and time
     """
 
-def cal_test_time(cal_real_sig, cal_pred_sig, test_real_sig, test_pred_sig):
+def cal_test_time(cal_real_sig, cal_pred_sig, test_real_sig, test_pred_sig, save_path=None):
     
     # Time step
     n = len(cal_real_sig[0])
@@ -41,8 +41,8 @@ def cal_test_time(cal_real_sig, cal_pred_sig, test_real_sig, test_pred_sig):
     # Grid
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
-
-
-
-
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()

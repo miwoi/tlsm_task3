@@ -1,178 +1,128 @@
 import datetime
+import os
 import klax
 import jax.random as jrandom
 import time
 import jax
+import matplotlib.pyplot as plt
 
-<<<<<<< HEAD
 import src.tmlsm.data as td
-import src.tmlsm.plots as tp
 import src.tmlsm.models as tm
-=======
-import tmlsm.data as td
-import tmlsm.plots as tp
-import tmlsm.models as tm
-import tmlsm.maxwell_modell as mm
+import src.tmlsm.plots.calibration_vs_test_in_time as p_cal_test
+import src.tmlsm.plots.stress_vs_strain as p_stress_strain
+import src.tmlsm.plots.interpol_vs_extrapol as p_inter_extra
+import src.tmlsm.plots.plots as tp
 
->>>>>>> e6b3c994077a75d99eb8e29804c831fb18830c2a
 
 now = datetime.datetime.now
 
 
 def main():
-    # Load and visualize data
+    # --- Data Parameters ---
     E_infty = 0.5
     E = 2.0
     eta = 1.0
     n = 100
-<<<<<<< HEAD
-    omegas = [1.0,1.0]
-    As = [1.0,5.0]
-=======
+    NumberSteps = 10000
 
-    omegas = [1.0]
-    As = [4.0]
-
-    #RNN_Modell(E_infty, E, eta, n, omegas, As)
-
-    #Maxwell_Modell(E_infty, E, eta, n, omegas, As)
-
-    Hybrid_Modell(E_infty, E, eta, n, omegas, As)
-
-
-
-
-
-def Hybrid_Modell(E_infty, E, eta, n, omegas, As):  
-     
-     # 1. Daten generieren (wie gehabt)
-    eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
     
-    # 2. Modell initialisieren
-  
-    key = jrandom.PRNGKey(time.time_ns())
-    keys = jrandom.split(key, 2)
+
+
+    # Calibration Data (Interpolation)
+    omegas_cal = [1.0, 1.0]
+    As_cal = [1.0, 5.0]
+    eps_cal, eps_dot_cal, sig_cal, dts_cal = td.generate_data_harmonic(E_infty, E, eta, n, omegas_cal, As_cal)
+    print(f"Calibration data shape: {eps_cal.shape}")
+
+    # Test Data (Extrapolation)
+    omegas_test = [1.0, 2.0, 3.0, 1.0]
+    As_test = [1.0, 1.0, 2.0, 3.0]
+    eps_test, eps_dot_test, sig_test, dts_test = td.generate_data_harmonic(E_infty, E, eta, n, omegas_test, As_test)
+
+    # --- Model Execution Loop ---
+    base_key = jrandom.PRNGKey(time.time_ns())
+    print("Base key:", base_key)
 
 
 
-    model = tm.HybridModel(E_infty, E, key=keys[0])
+    # Define models to run
+    models_to_run = ["RNN", "Hybrid"]
 
-    # 3. Training (Kalibrierung)
-    
-    t1 = now()
-    print("Starte Training des Hybrid-Modells...")
-    model, history = klax.fit(
-        model,
-        ((eps, dts), sig), # Input: (Dehnung, Zeit), Target: Spannung
-        batch_axis=0,
-        steps=2000, # Evtl. mehr Steps nötig
-        key=key,
-    )
+    for model_name in models_to_run:
+        print(f"\n{'='*10} Running {model_name} Model {'='*10}")
+        
+        # Split keys for this run
+        base_key, key_init, key_train = jrandom.split(base_key, 3)
 
-    t2 = now()
-    print(f"it took {(t2 - t1).total_seconds():.2f} (sec) to calibrate the model")
+        # Build model instance
+        if model_name == "RNN":
+            model = tm.build(key=key_init)
+        elif model_name == "Hybrid":
+            model = tm.HybridModel(E_infty, E, key=key_init)
+        else:
+            continue
 
-    history.plot()
+        ### Training 
+        t1 = now()
+        model, history = klax.fit(
+            model,
+            ((eps_cal, dts_cal), sig_cal),
+            batch_axis=0,
+            steps=NumberSteps,
+            history=klax.HistoryCallback(log_every=1),
+            key=key_train,
+        )
+        t2 = now()
+        print(f"Calibration took {(t2 - t1).total_seconds():.2f} seconds")
 
-    # Unwrap all wrappers and apply all constraints to the model
-    model_ = klax.finalize(model)
+        # Unwrap model
+        model_ = klax.finalize(model)
 
-    ### Plotting 
-    eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
-    sig_m = jax.vmap(model_)((eps, dts))
-    tp.plot_data(eps, eps_dot, sig, omegas, As)
-    tp.plot_model_pred(eps, sig, sig_m, omegas, As)
+        ### Prediction
+        sig_m_cal = jax.vmap(model_)((eps_cal, dts_cal))
+        sig_m_test = jax.vmap(model_)((eps_test, dts_test))
 
-    As = [1, 1, 2]
-    omegas = [1, 2, 3]
+        ### Saving Plots
+        timestamp = int(time.time())
+        save_dir = os.path.join("created_plots", model_name, str(timestamp))
+        os.makedirs(save_dir, exist_ok=True)
+        print(f"Saving plots to: {save_dir}")
 
-    eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
-    sig_m = jax.vmap(model_)((eps, dts))
-    tp.plot_data(eps, eps_dot, sig, omegas, As)
-    tp.plot_model_pred(eps, sig, sig_m, omegas, As)
+        # 1. Calibration vs Test (Time)
+        p_cal_test.cal_test_time(
+            sig_cal, sig_m_cal, 
+            sig_test, sig_m_test, 
+            save_path=os.path.join(save_dir, "calibration_vs_test_time.png")
+        )
 
-    eps, eps_dot, sig, dts = td.generate_data_relaxation(E_infty, E, eta, n, omegas, As)
-    sig_m = jax.vmap(model_)((eps, dts))
-    tp.plot_data(eps, eps_dot, sig, omegas, As)
-    tp.plot_model_pred(eps, sig, sig_m, omegas, As)
+        # 2. Stress vs Strain
+        # Note: Model predicts stress, so we use input eps for both real and pred x-axis
+        p_stress_strain.stress_strain_plot(
+            sig_cal, sig_m_cal, 
+            sig_test, sig_m_test,
+            eps_cal, eps_cal, 
+            eps_test, eps_test,
+            save_path=os.path.join(save_dir, "stress_vs_strain.png")
+        )
 
+        # 3. Interpolation vs Extrapolation
+        p_inter_extra.interpol_extrapol(
+            sig_cal, sig_m_cal, 
+            sig_test, sig_m_test, 
+            save_path=os.path.join(save_dir, "interpol_vs_extrapol.png")
+        )
 
+        # 4. Plots from plots.py (Data Calibration)
+        tp.plot_data(eps_cal, eps_dot_cal, sig_cal, omegas_cal, As_cal, save_path=os.path.join(save_dir, "data_calibration.png"))
 
+        # 5. Plots from plots.py (Model Prediction Calibration)
+        tp.plot_model_pred(eps_cal, sig_cal, sig_m_cal, omegas_cal, As_cal, save_path=os.path.join(save_dir, "model_prediction_calibration.png"))
 
+        # 6. Plots from plots.py (Data Test)
+        tp.plot_data(eps_test, eps_dot_test, sig_test, omegas_test, As_test, save_path=os.path.join(save_dir, "data_test.png"))
 
-
-def Maxwell_Modell(E_infty, E, eta, n, omegas, As): 
-     
-
-    eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As) 
-    new_maxwell_modell = mm.MaxwellModel(E_infty, E, eta)
-    sig_pred = jax.vmap(new_maxwell_modell)((eps, dts))   
-    tp.plot_model_pred(eps, sig, sig_pred, omegas, As)
-
-
-   
-
-
-
-
-
-def RNN_Modell(E_infty, E, eta, n, omegas, As): 
-
->>>>>>> e6b3c994077a75d99eb8e29804c831fb18830c2a
-
-    eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
-    print(eps.shape)
-    tp.plot_data(eps, eps_dot, sig, omegas, As)
-
-    # Create a random key for the random weight initialization and the
-    # batch generation.
-    key = jrandom.PRNGKey(time.time_ns())
-    print("base keys",key)
-    keys = jrandom.split(key, 2)
-
-    # Build model instance
-    model = tm.build(key=keys[0])
-
-    ### Training 
-    # Calibrate the model
-    t1 = now()
-    print(t1)
-
-    model, history = klax.fit(
-        model,
-        ((eps, dts), sig),
-        batch_axis=0,
-        steps=10000,
-        history=klax.HistoryCallback(log_every=1),
-        key=keys[1],
-    )
-
-    t2 = now()
-    print(f"it took {(t2 - t1).total_seconds():.2f} (sec) to calibrate the model")
-
-    history.plot()
-
-    # Unwrap all wrappers and apply all constraints to the model
-    model_ = klax.finalize(model)
-
-    ### Plotting 
-    eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
-    sig_m = jax.vmap(model_)((eps, dts))
-    tp.plot_data(eps, eps_dot, sig, omegas, As)
-    tp.plot_model_pred(eps, sig, sig_m, omegas, As)
-
-    As = [1, 1, 2,3]
-    omegas = [1, 2, 3,1]
-
-    eps, eps_dot, sig, dts = td.generate_data_harmonic(E_infty, E, eta, n, omegas, As)
-    sig_m = jax.vmap(model_)((eps, dts))
-    tp.plot_data(eps, eps_dot, sig, omegas, As)
-    tp.plot_model_pred(eps, sig, sig_m, omegas, As)
-
-    eps, eps_dot, sig, dts = td.generate_data_relaxation(E_infty, E, eta, n, omegas, As)
-    sig_m = jax.vmap(model_)((eps, dts))
-    tp.plot_data(eps, eps_dot, sig, omegas, As)
-    tp.plot_model_pred(eps, sig, sig_m, omegas, As)
+        # 7. Plots from plots.py (Model Prediction Test)
+        tp.plot_model_pred(eps_test, sig_test, sig_m_test, omegas_test, As_test, save_path=os.path.join(save_dir, "model_prediction_test.png"))
 
 
 if __name__ == "__main__":

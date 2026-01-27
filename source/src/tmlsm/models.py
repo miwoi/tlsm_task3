@@ -120,7 +120,6 @@ class HybridCell(eqx.Module):
         gamma_new = gamma + dt * gamma_dot
 
         # 3. Physikalische Berechnung der Spannung (Hard-coded Physics)
-        # Hier nutzen wir die bekannten Parameter E und E_infty
         sig = self.E_infty * eps + self.E * (eps - gamma_new)
 
         return gamma_new, sig
@@ -138,4 +137,5 @@ class HybridModel(eqx.Module):
 
         init_state = jnp.array(0.0)
         _, ys = jax.lax.scan(scan_fn, init_state, xs)
+
         return ys

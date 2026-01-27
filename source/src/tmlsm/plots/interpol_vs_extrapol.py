@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
         4) Predicted stress test results of the second model
     """
 
-def interpol_extrapol(cal_real_sig, cal_pred_sig, test_real_sig, test_pred_sig):
+def interpol_extrapol(cal_real_sig, cal_pred_sig, test_real_sig, test_pred_sig, save_path=None):
     
     # Time step
     n = len(cal_real_sig[0])
@@ -46,8 +46,8 @@ def interpol_extrapol(cal_real_sig, cal_pred_sig, test_real_sig, test_pred_sig):
     # Grid
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
-
-
-
-
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
