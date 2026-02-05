@@ -23,8 +23,8 @@ class HybridCell(eqx.Module):
         self.E = E
 
         # Feed-Forward NN (MLP), learns f(eps, gamma) 
-        # Input: 2 Dimensionen (eps, gamma)
-        # Output: 1 Dimension (gamma_dot bzw. Rate der Änderung)
+        # Input: 2 Dimensions (eps, gamma)
+        # Output: 1 Dimension (gamma_dot)
         self.layers = (
             klax.nn.Linear(2, 16, weight_init=he_normal(), key=key),
             klax.nn.Linear(16, 16, weight_init=he_normal(), key=key), 

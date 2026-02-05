@@ -29,14 +29,14 @@ class Cell(eqx.Module):
 
     def __call__(self, gamma, x):
         eps = x[0]
-        h = x[1]
+        dt = x[1]
 
-        x = jnp.array([gamma, eps, h])
+        # Input vector: [previous_state, strain, time_step]
+        network_input = jnp.array([gamma, eps, dt])
 
+        x = network_input
         for layer, activation in zip(self.layers, self.activations):
             x = activation(layer(x))
-
-        print("This is the output: ", x)
 
         gamma = x[0]
         sig = x[1]
